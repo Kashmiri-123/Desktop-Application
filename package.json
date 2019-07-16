@@ -1,0 +1,11 @@
+{
+  "name": "desktopapplication",
+  "version": "1.0.0",
+  "description": "Shopping List Desktop App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Kashmiri Mahanta",
+  "license": "MIT"
+}
