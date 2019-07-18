@@ -4,6 +4,9 @@ const path = require('path');
 
 const {app, BrowserWindow, Menu,ipcMain} = electron;
 
+//Set ENV to production so no DevTools
+process.env.NODE_ENV = 'production';
+
 let mainWindow;
 let addWindow;
 //listen for the app to be ready
