@@ -2,7 +2,7 @@ const electron = require('electron');
 const url = require('url');
 const path = require('path');
 
-const {app, BrowserWindow, Menu} = electron;
+const {app, BrowserWindow, Menu,ipcMain} = electron;
 
 let mainWindow;
 let addWindow;
@@ -12,7 +12,7 @@ app.on('ready', function(){
         mainWindow = new BrowserWindow({});
         //load html into window
         mainWindow.loadURL(url.format({
-            pathname: path.join(__dirname, 'mainWindow.html'),
+            pathname: path.join(__dirname, 'MainWindow.html'),
             protocol:'file',
             slashes:true
         }));
@@ -21,9 +21,9 @@ app.on('ready', function(){
             app.quit();
         });
         //build menu from template
-        const MainMenu = Menu.buildFromTemplate(mainMenuTemplate);
+        const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
         //Insert menu
-        Menu.setApplicationMenu(MainMenu);
+        Menu.setApplicationMenu(mainMenu);
 });
 
 //Handle create add window
@@ -37,11 +37,24 @@ function createAddWindow()
                     });
     //load html into window
     addWindow.loadURL(url.format({
-                pathname: path.join(__dirname, 'addWindow.html'),
+                pathname: path.join(__dirname, 'AddWindow.html'),
                 protocol:'file',
                 slashes:true
                     }));
+                    
+     //Garbage collection handle.cause even after closing the menu it still occupies the space
+     addWindow.on('close', function(){
+        addWindow = null;
+    });
     }
+
+     //catch item:add
+     ipcMain.on('item:add',function(e,item){
+        console.log(item);
+        mainWindow.webContents.send('item:add', item);
+        addWindow.close();
+    });
+
 
 //Create menu Template
 const mainMenuTemplate = [
@@ -56,7 +69,11 @@ const mainMenuTemplate = [
                 }
            },
            {
-               label : 'Clear Item'
+               label : 'Clear Item',
+               click()
+               {
+                   mainWindow.webContents.send('item:clear');
+               }
            },
            {
                label : 'Quit',
@@ -70,3 +87,29 @@ const mainMenuTemplate = [
                 ]
     }
 ];
+
+
+//if in mac then the Menu name "file" will be written as "electron" so to overcome this
+if(process.platform == 'darwin'){
+    mainMenuTemplate.unshift({});
+}
+
+//add developer tool item if not in production
+if(process.env.NODE_ENV !== 'production'){
+mainMenuTemplate.push({
+    label : 'Developer Tools',
+    submenu : [
+        {
+            label : 'Toggle DevTools',
+            accelerator : process.platform == 'darwin ' ? 'Command+I':
+            'Ctrl+I',
+            click(item, focusedWindow){
+                focusedWindow.toggleDevTools(); 
+            }
+        },
+        {
+            role : 'reload'
+        }
+    ]
+});
+}
